@@ -32,20 +32,34 @@ neutrons = 10000
 transmission_probability = []
 accuracy = []
 for thickness in thickness_list:
-    prob, acc = transmission(thickness, sigma_a, sigma_s, neutrons)  # Transmission retourne prob et acc
+    prob, acc = transmission(thickness, sigma_a, sigma_s, neutrons)
     transmission_probability.append(prob)
     accuracy.append(acc)
 
+# sigma_a/sigma_t sensitivity
+ratio = [0.1, 0.5, 1, 2]
+transmission_probability_ratio = []
+ratio_cross_section = []
+for i in ratio:
+    transmission_probability_ratio.append(transmission(50, sigma_a*i, sigma_s, neutrons)[0])
+    ratio_cross_section.append(sigma_a*i/sigma_s)
+
+# Plot
 plt.figure(figsize=(12, 6))
 
-plt.subplot(1, 2, 1)
+plt.subplot(2, 2, 1)
 plt.plot(thickness_list, transmission_probability)
 plt.xlabel('Thickness')
 plt.ylabel('Transmission probability')
 
-plt.subplot(1, 2, 2)
+plt.subplot(2, 2, 2)
 plt.plot(thickness_list, accuracy)
 plt.xlabel('Thickness')
 plt.ylabel('Accuracy')
+
+plt.subplot(2, 2, 3)
+plt.plot(ratio_cross_section, transmission_probability_ratio)
+plt.xlabel('sigma_a/sigma_s')
+plt.ylabel('Transmission probability')
 
 plt.show()
