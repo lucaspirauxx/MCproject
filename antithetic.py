@@ -1,5 +1,4 @@
-from statistics import variance
-
+import time
 import numpy as np
 
 def transmission(thickness, sigma_a, sigma_s, neutrons) :
@@ -43,9 +42,10 @@ sigma_s = 0.4   # Scattering for concrete wall  (cm-1)
 neutrons = 10000
 
 # Call
+start_time = time.time()
 prob, acc = transmission(thickness, sigma_a, sigma_s, neutrons)
-
+end_time = time.time()
 print("Transmission probability =", prob)
 print("Accuracy =", acc)
-
+print("Time =", end_time-start_time)
 
