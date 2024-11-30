@@ -23,10 +23,10 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
     return transmission_prob, accuracy
 
 # Variables
-thickness_list = np.linspace(0, 100, 10)   # For typical concrete wall (cm)
+thickness_list = np.linspace(0, 100, 100)   # For typical concrete wall (cm)
 sigma_a = 0.01  # Absorption for concrete wall  (cm-1)
 sigma_s = 0.4   # Scattering for concrete wall  (cm-1)
-neutrons = 10000
+neutrons = 1000
 
 # Call
 transmission_probability = []
@@ -37,7 +37,7 @@ for thickness in thickness_list:
     accuracy.append(acc)
 
 # sigma_a/sigma_t sensitivity
-ratio = [0.1, 0.5, 1, 2]
+ratio = [0.1, 0.3, 0.5, 1, 2, 3, 4]
 transmission_probability_ratio = []
 ratio_cross_section = []
 for i in ratio:
