@@ -1,39 +1,38 @@
+from statistics import variance
+
 import numpy as np
 
-
-def transmission(thickness, sigma_a, sigma_s, neutrons):
-    transmitted = 0  # Compte les neutrons qui passent le mur
-
+def transmission(thickness, sigma_a, sigma_s, neutrons) :
+    transmitted = 0
     for _ in range(neutrons):  # Pour chaque neutron
         position = 0
         position_antithetic = 0
+        absorbed = [False, False]
+        traversed = [False, False]
 
-        # Trajectoire normale
-        while position < thickness:
-            # Sample le transition kernel pour le free flight
-            free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
-            position += free_flight
-            # Collision : p(i) = sigma(i) / sigma(t)
-            if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
-                # Absorption : stop cette trajectoire
-                break
-
-        # Trajectoire antithétique
-        while position_antithetic < thickness:
-            free_flight_antithetic = -np.log(1 - np.random.rand()) / (sigma_a + sigma_s)
-            position_antithetic += free_flight_antithetic
-            if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
-                # Absorption pour la trajectoire antithétique
-                break
-
-        # Si l'une des trajectoires a traversé l'épaisseur, on l'ajoute
-        if position >= thickness:
+        while not (absorbed[0] or traversed[0]) or not (absorbed[1] or traversed[1]):
+            rand = np.random.rand()
+            if not (absorbed[0] or traversed[0]):
+                free_flight = -np.log(rand) / (sigma_a + sigma_s)
+                position += free_flight
+                if position >= thickness:
+                    traversed[0] = True
+                elif rand <= sigma_a / (sigma_s + sigma_a):
+                    absorbed[0] = True
+            if not (absorbed[1] or traversed[1]):
+                free_flight_antithtetic = -np.log(1-rand) / (sigma_a + sigma_s)
+                position_antithetic += free_flight_antithtetic
+                if position_antithetic >= thickness:
+                    traversed[1] = True
+                elif 1 - rand <= sigma_a / (sigma_s + sigma_a):
+                    absorbed[1] = True
+        if traversed[0]:
             transmitted += 1
-        if position_antithetic >= thickness:
+        if traversed[1]:
             transmitted += 1
 
-    # Calcul de la probabilité de transmission
-    transmission_prob = transmitted / (2 * neutrons)  # Moyenne des deux trajectoires
+    transmission_prob = (transmitted)/(neutrons*2)
+    # Variance = success x failure / trials
     accuracy = np.sqrt(transmission_prob * (1 - transmission_prob) / neutrons)
     return transmission_prob, accuracy
 
@@ -48,4 +47,5 @@ prob, acc = transmission(thickness, sigma_a, sigma_s, neutrons)
 
 print("Transmission probability =", prob)
 print("Accuracy =", acc)
+
 
