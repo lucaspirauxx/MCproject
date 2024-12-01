@@ -10,20 +10,21 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
         traversed = [False, False]
 
         while not (absorbed[0] or traversed[0]) or not (absorbed[1] or traversed[1]):
-            rand = np.random.rand()
+            rand_free_flight = np.random.rand()
+            rand_collision = np.random.rand()
             if not (absorbed[0] or traversed[0]):
-                free_flight = -np.log(rand) / (sigma_a + sigma_s)
+                free_flight = -np.log(rand_free_flight) / (sigma_a + sigma_s)
                 position += free_flight
                 if position >= thickness:
                     traversed[0] = True
-                elif rand <= sigma_a / (sigma_s + sigma_a):
+                elif rand_collision <= sigma_a / (sigma_s + sigma_a):
                     absorbed[0] = True
             if not (absorbed[1] or traversed[1]):
-                free_flight_antithtetic = -np.log(1-rand) / (sigma_a + sigma_s)
-                position_antithetic += free_flight_antithtetic
+                free_flight_antithetic = -np.log(1-rand_free_flight) / (sigma_a + sigma_s)
+                position_antithetic += free_flight_antithetic
                 if position_antithetic >= thickness:
                     traversed[1] = True
-                elif 1 - rand <= sigma_a / (sigma_s + sigma_a):
+                elif (1 - rand_collision) <= sigma_a / (sigma_s + sigma_a):
                     absorbed[1] = True
         if traversed[0]:
             transmitted += 1

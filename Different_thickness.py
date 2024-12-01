@@ -13,7 +13,7 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
             if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
                 # Absorption : deal with next neutron
                 break
-            # If scattering : isotropic =} just next free flight
+            # If scattering : isotropic =}
         else :
             transmitted += 1
 

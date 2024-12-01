@@ -1,36 +1,19 @@
 import numpy as np
 import time
 
-split_depth = 198
-m = 10
-
 def transmission(thickness, sigma_a, sigma_s, neutrons) :
     transmitted = 0  # Compte les neutrons qui passent le mur
     for _ in range(neutrons):  # Pour chaque neutron
         position = 0
-        weight = 1
         while position < thickness :
             # Sample le transition kernel pour le free flight
-            free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
+            free_flight = -np.log(np.random.rand()) / ((sigma_a + sigma_s))
             position += free_flight
             # Collision : p(i)=sigma(i)/sigma(t)
             if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
                 # Absorption : deal with next neutron
                 break
             # If scattering : isotropic =} just next free flight
-            if position >= split_depth:
-                weight /= m
-                for _ in range(m):
-                    sub_position = position
-                    sub_weight = weight
-                    while sub_position < thickness:
-                        free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
-                        sub_position += free_flight
-                        if np.random.rand() <= sigma_a / (sigma_a + sigma_s):
-                            break
-                    else:
-                        transmitted += sub_weight
-                break  # On arrête le neutron car on l'a split
         else :
             transmitted += 1
 
@@ -52,5 +35,3 @@ end_time = time.time()
 print("Transmission probability =", prob)
 print("Accuracy =", acc)
 print("Time =", end_time-start_time)
-
-
