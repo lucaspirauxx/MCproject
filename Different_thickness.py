@@ -21,7 +21,7 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
             # If scattering : isotropic =} just next free flight
 
             # Sample le transition kernel pour le free flight
-            free_flight = -np.log(np.random.rand()) / ((sigma_a + sigma_s))
+            free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
             position += free_flight
         else:
             transmitted += 1
