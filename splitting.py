@@ -27,23 +27,17 @@ def transmission(thickness, sigma_a, sigma_s, neutrons):
             free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
             position += free_flight
 
-            if position >= thickness:
-                weight /= m  # The weight is divided by m when splitting
-
-                for _ in range(m):
-                    sub_position = position - free_flight
-                    sub_weight = weight
-
-                    while sub_position < thickness:
-                        free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
-                        sub_position += free_flight
-                        if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
-                            break
-                    else:
-                        transmitted += sub_weight
-                break
         else:
-            transmitted += 1  # If the neutron passes the whole material
+            weight /= m  # The weight is divided by m when splitting
+            for _ in range(m):
+                sub_position = position - free_flight
+                while sub_position < thickness:
+                    sub_free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
+                    sub_position += sub_free_flight
+                    if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
+                        break
+                else:
+                    transmitted += weight
 
     transmission_prob = transmitted / neutrons
     accuracy = np.sqrt(transmission_prob * (1 - transmission_prob) / neutrons)
