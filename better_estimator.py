@@ -5,17 +5,24 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
     transmitted = 0  # Compte les neutrons qui passent le mur
     for _ in range(neutrons):  # Pour chaque neutron
         position = 0
+        # Premier vol libre avant la boucle de collision
+        free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
+        position += free_flight
+
+        if position >= thickness:
+            transmitted += np.exp(-thickness * (sigma_a + sigma_s))
+            continue
+
         while position < thickness :
-            # Sample le transition kernel pour le free flight
-            free_flight = -np.log(np.random.rand()) / ((sigma_a + sigma_s))
-            position += free_flight
             # Collision : p(i)=sigma(i)/sigma(t)
             if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
                 # Absorption : deal with next neutron
                 break
             # If scattering : isotropic =} just next free flight
+            free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
+            position += free_flight
         else :
-            transmitted += 1
+            transmitted += np.exp(-(thickness-(position-free_flight)) * (sigma_a + sigma_s))
 
     transmission_prob = transmitted / neutrons
     # Variance = success x failure / trials

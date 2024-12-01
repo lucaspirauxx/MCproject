@@ -2,7 +2,7 @@ import numpy as np
 import time
 
 # Constants
-m = 100  # Number of splits per scattering
+m = 1000  # Number of splits per scattering
 
 def transmission(thickness, sigma_a, sigma_s, neutrons):
     transmitted = 0  # Count neutrons that pass through the wall
