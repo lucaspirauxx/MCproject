@@ -28,9 +28,8 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
                 position = sum(thickness[:wall+1])  # On retourne à l'interface et sample free flight
                 wall += 1
                 free_flight = -np.log(np.random.rand()) / (sigma_a[wall] + sigma_s[wall])
-                position += free_flight
-            else :
-                position += free_flight
+
+            position += free_flight
         else:
             transmitted += 1
 
@@ -40,9 +39,9 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
 
 # Variables
 
-thickness = [100, 50, 50]  # For typical concrete wall (cm)
-sigma_a = [0.01, 0.02, 0.05]  # Absorption for concrete wall  (cm-1)
-sigma_s = [0.4, 0.6, 0.8]   # Scattering for concrete wall  (cm-1)
+thickness = [100,100]  # For typical concrete wall (cm)
+sigma_a = [0.01, 0.01]  # Absorption for concrete wall  (cm-1)
+sigma_s = [0.4, 0.4]   # Scattering for concrete wall  (cm-1)
 neutrons = 10000
 
 # Call

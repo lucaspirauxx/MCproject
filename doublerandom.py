@@ -5,38 +5,46 @@ def trouver_mur(position):
     position_tot = 0
     for i, epaisseur in enumerate(thickness):
         position_tot += epaisseur
-        if position <= position_tot:
-            return i  # Retourne l'indice du mur
-    return -1  # Si le neutron est après le dernier mur
+        if position < position_tot:
+            return i
+    return -1
 
+def incertitude(valeur_moyenne, ecart_type):
+    """Génère une valeur aléatoire selon une distribution normale."""
+    return np.random.normal(valeur_moyenne, ecart_type)
 
 def transmission(thickness, sigma_a, sigma_s, neutrons) :
-    transmitted = 0  # Compte les neutrons qui passent le mur
-    for _ in range(neutrons):  # Pour chaque neutron
+    transmitted = 0
+    for _ in range(neutrons):
         position = 0
+        wall = 0
+        # On suppose pour l'instant qu'il peut pas changer de mur au premier flight
+        free_flight = -np.log(np.random.rand()) / (sigma_a[wall] + sigma_s[wall])
+        position += free_flight
         while position < sum(thickness) :
-            wall = trouver_mur(position)
-            # Sample le transition kernel pour le free flight
-            free_flight = -np.log(np.random.rand()) / ((sigma_a[wall] + sigma_s[wall]))
-            position += free_flight
-            # Collision : p(i)=sigma(i)/sigma(t)
+
             if np.random.rand() <= sigma_a[wall] / (sigma_s[wall] + sigma_a[wall]):
-                # Absorption : deal with next neutron
                 break
-            # If scattering : isotropic =} just next free flight
-        else :
+
+            free_flight = -np.log(np.random.rand()) / (sigma_a[wall] + sigma_s[wall])
+            if sum(thickness[:wall + 1]) < position + free_flight < sum(thickness):
+                position = sum(thickness[:wall+1])  # On retourne à l'interface et sample free flight
+                wall += 1
+                free_flight = -np.log(np.random.rand()) / (sigma_a[wall] + sigma_s[wall])
+
+            position += free_flight
+        else:
             transmitted += 1
 
     transmission_prob = transmitted / neutrons
-    # Variance = success x failure / trials
     accuracy = np.sqrt(transmission_prob * (1 - transmission_prob) / neutrons)
     return transmission_prob, accuracy
 
 # Variables
-
-thickness = [100, 100]  # For typical concrete wall (cm)
-sigma_a = [0.01, 0.001]  # Absorption for concrete wall  (cm-1)
-sigma_s = [0.4, 0.1]   # Scattering for concrete wall  (cm-1)
+layers = 3
+thickness = [100, 50, 50]  # For typical concrete wall (cm)
+sigma_a = [0.01, 0.02, 0.05]  # Absorption for concrete wall  (cm-1)
+sigma_s = [0.4, 0.6, 0.8]   # Scattering for concrete wall  (cm-1)
 neutrons = 10000
 
 # Call
