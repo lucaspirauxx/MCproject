@@ -10,7 +10,7 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
         position += free_flight
 
         if position >= thickness:
-            transmitted += np.exp(-thickness * (sigma_a + sigma_s))
+            transmitted += 1
             continue
 
         while position < thickness :
@@ -18,11 +18,12 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
             if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
                 # Absorption : deal with next neutron
                 break
-            # If scattering : isotropic =} just next free flight
+            # If scattering : isotropic =}
+            cos_theta = np.random.rand()*2 - 1
             free_flight = -np.log(np.random.rand()) / (sigma_a + sigma_s)
-            position += free_flight
+            position += free_flight * cos_theta
         else :
-            transmitted += np.exp(-(thickness-(position-free_flight)) * (sigma_a + sigma_s))
+            transmitted += 1
 
     transmission_prob = transmitted / neutrons
     # Variance = success x failure / trials
@@ -30,7 +31,7 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
     return transmission_prob, accuracy
 
 # Variables
-thickness = 200  # For typical concrete wall (cm)
+thickness = 20  # For typical concrete wall (cm)
 sigma_a = 0.01  # Absorption for concrete wall  (cm-1)
 sigma_s = 0.4   # Scattering for concrete wall  (cm-1)
 neutrons = 10000

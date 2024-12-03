@@ -3,6 +3,8 @@ import time
 
 # Constants
 m = 1000  # Number of splits per scattering
+I_2 = 3
+I_1 = 1
 
 def transmission(thickness, sigma_a, sigma_s, neutrons):
     transmitted = 0  # Count neutrons that pass through the wall
