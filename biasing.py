@@ -19,7 +19,7 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
             # Collision : p(i)=sigma(i)/sigma(t)
             if np.random.rand() <= sigma_a / (sigma_s + sigma_a):
                 # Absorption : force to go in scattering with a bias
-                weight *= sigma_a / (sigma_s + sigma_a)
+                weight *= sigma_s / (sigma_s + sigma_a)
                 if weight < 0.4:
                     if np.random.rand() > 0.2:
                         break
@@ -44,7 +44,7 @@ def transmission(thickness, sigma_a, sigma_s, neutrons) :
 thickness = 20  # For typical concrete wall (cm)
 sigma_a = 0.01  # Absorption for concrete wall  (cm-1)
 sigma_s = 0.4   # Scattering for concrete wall  (cm-1)
-neutrons = 10000
+neutrons = 1000
 
 # Call
 start_time = time.time()

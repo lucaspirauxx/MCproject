@@ -2,11 +2,12 @@ import numpy as np
 import time
 
 # Constants
-m = 1000  # Number of splits per scattering
-I_2 = 3
-I_1 = 1
+m = 10  # Number of splits per scattering
+I_ratio = 2
 
 def transmission(thickness, sigma_a, sigma_s, neutrons):
+    mfp = 1/(sigma_a+sigma_s)
+
     transmitted = 0  # Count neutrons that pass through the wall
     for _ in range(neutrons):  # For each neutron
         position = 0
