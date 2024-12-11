@@ -13,16 +13,15 @@ def event_based_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, mission_time, iter
         [0, 0, 2*mu_s, 0, mu_1, -2*mu_s-mu_1]
     ])
     failure_state = 5  # Index of the failure state
-
     # Initialize counters
     availability_time = np.zeros(mission_time)
+    reliability_time = np.zeros(mission_time)
     failure_counter = 0
-    unreliability_counter = 0
     # Event-based Monte Carlo simulation
     for _ in range(iterations):
         current_time = 0
         state = 0  # Start in the operational state
-        failure_occurred = False
+        has_failed = False
         while current_time < mission_time:
             # Sample transition times for all possible transitions
             transition_times = [
@@ -32,32 +31,32 @@ def event_based_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, mission_time, iter
             # Determine the next transition
             min_time = min(transition_times)
             next_state = np.argmin(transition_times)
-            # Update availability time
+            time_end = min(int(current_time + min_time), mission_time)
+            # Update availability (always operational if not in failure state)
             if state != failure_state:
-                time_end = min(current_time + min_time, mission_time)
-                availability_time[int(current_time):int(time_end)] += 1
-            # Update time and state
+                availability_time[int(current_time):time_end] += 1
+                if not has_failed:
+                    # Update reliability only if no failure has occurred
+                    reliability_time[int(current_time):time_end] += 1
+            # Advance time and state
             current_time += min_time
             state = next_state
-            # Stop simulation if failure state is reached
+            # Mark failure if we enter the failure state
             if state == failure_state:
                 failure_counter += 1
-                failure_occurred = True
-                break
-        # Track unreliability
-        if failure_occurred:
-            unreliability_counter += 1
-    # Calculate availability, unavailability, and unreliability
+                has_failed = True
+    # Normalize counters to calculate probabilities
     availability = availability_time / iterations
+    reliability = reliability_time / iterations
     unavailability = 1 - availability
-    unreliability = unreliability_counter / iterations
-    return availability, unavailability, unreliability
+    unreliability = 1 - reliability
+    return availability, unavailability, reliability, unreliability
 
 # Reliability cases
 cases = [
-    {"lambda_1": 0.1, "mu_1": 0.1, "lambda_s": 0.05, "mu_s": 0.05},  # Case 1: Balanced rates
-    {"lambda_1": 0.05, "mu_1": 0.2, "lambda_s": 0.02, "mu_s": 0.1},  # Case 2: High repair rates
-    {"lambda_1": 0.2, "mu_1": 0.05, "lambda_s": 0.1, "mu_s": 0.02}   # Case 3: High failure rates
+    {"lambda_1": 0.1, "mu_1": 0.1, "lambda_s": 0.05, "mu_s": 0.05}, # Case 1: Balanced rates (Ratio lambda/mu = 1)
+    {"lambda_1": 0.05, "mu_1": 0.2, "lambda_s": 0.02, "mu_s": 0.1}, # Case 2: High repair rates (Ratio lambda/mu < 1)
+    {"lambda_1": 0.2, "mu_1": 0.05, "lambda_s": 0.1, "mu_s": 0.02}  # Case 3: High failure rates (Ratio lambda/mu > 1)
 ]
 mission_time = 1000
 iterations = 10000
@@ -65,7 +64,7 @@ iterations = 10000
 # Simulate for reliability cases
 results = []
 for case in cases:
-    availability, unavailability, unreliability = event_based_mc_simulation(
+    availability, unavailability, reliability, unreliability = event_based_mc_simulation(
         lambda_1=case["lambda_1"],
         mu_1=case["mu_1"],
         lambda_s=case["lambda_s"],
@@ -73,24 +72,34 @@ for case in cases:
         mission_time=mission_time,
         iterations=iterations
     )
-    results.append((availability, unavailability, unreliability))
+    results.append((availability, unavailability, reliability, unreliability))
 
-# Plot availability and unavailability
+# Plot unavailability and unreliability
 time_points = np.arange(0, mission_time)
 plt.figure(figsize=(14, 8))
-for i, (availability, unavailability, unreliability) in enumerate(results):
-    # Plot availability
-    plt.plot(time_points, availability, label=f"Case {i+1}: Availability")
+for i, (availability, unavailability, reliability, unreliability) in enumerate(results):
     # Plot unavailability
-    plt.plot(time_points, unavailability, linestyle='--', label=f"Case {i+1}: Unavailability")
-    # Print numerical results
-    print(f"Case {i+1} - Unreliability: {unreliability:.4f}")
-    print(f"Case {i+1} - Final Availability: {availability[-1]:.4f}")
-    print(f"Case {i+1} - Final Unavailability: {unavailability[-1]:.4f}")
-plt.xlabel("Time")
+    plt.plot(time_points, unavailability, label=f"Case {i+1}: Unavailability", linestyle='-')
+    # Plot unreliability
+    plt.plot(time_points, unreliability, label=f"Case {i+1}: Unreliability", linestyle='--')
+plt.xlabel("Time (s)")
 plt.ylabel("Probability")
 plt.legend()
-plt.title("Availability and Unavailability for Reliability Cases")
+plt.title("Unavailability and Unreliability for Reliability Cases")
+plt.grid()
+plt.show()
+
+# Plot availability and reliability
+plt.figure(figsize=(14, 8))
+for i, (availability, unavailability, reliability, unreliability) in enumerate(results):
+    # Plot availability
+    plt.plot(time_points, availability, label=f"Case {i+1}: Availability")
+    # Plot reliability
+    plt.plot(time_points, reliability, label=f"Case {i+1}: Reliability")
+plt.xlabel("Time (s)")
+plt.ylabel("Probability")
+plt.legend()
+plt.title("Availability for Reliability Cases")
 plt.grid()
 plt.show()
 
@@ -98,8 +107,8 @@ plt.show()
 iteration_sizes = [100, 1000, 10000, 100000]
 accuracies = []
 for iterations in iteration_sizes:
-    availability, unavailability, unreliability = event_based_mc_simulation(
-        lambda_1=cases[0]["lambda_1"], # Use the first case for accuracy analysis
+    availability, unavailability, reliability, unreliability = event_based_mc_simulation(
+        lambda_1=cases[0]["lambda_1"],  # Use the first case for accuracy analysis
         mu_1=cases[0]["mu_1"],
         lambda_s=cases[0]["lambda_s"],
         mu_s=cases[0]["mu_s"],
@@ -108,6 +117,7 @@ for iterations in iteration_sizes:
     )
     accuracy_estimate = 1 / np.sqrt(iterations)  # Compute accuracy
     accuracies.append(accuracy_estimate)
+
 # Plot accuracy vs number of iterations
 plt.figure(figsize=(12, 6))
 plt.plot(iteration_sizes, accuracies, marker='o')
