@@ -14,13 +14,13 @@ A = [(-lambda_1, lambda_1, 0, 0, 0, 0), (mu_1, -mu_1-lambda_s, lambda_s, 0, 0, 0
 
 failure_state = 5
 
-t = 100  # time of the mission
+t = 200  # time of the mission
 delta_t = 1
-i_t_mission = 0  # Counter of state at the end
-counter = [0]*int((t/delta_t))  # Every element is for every delta time
+i_t_mission = 0  # Counter of state at the end  # Every element is for every delta time
+iterations = 5000
+Av = [[0] * int((t/delta_t)) for iteration in range(iterations)]
 
-iterations = 1000
-for _ in range(iterations):
+for it in range(iterations):
     t_mission = 0
     i = 0
     while t_mission < t:
@@ -28,12 +28,13 @@ for _ in range(iterations):
 
         if i != failure_state:  # Counter over time of availaibility
             ind_counter_start = t_mission // delta_t
-            ind_counter_final = min((t_mission + state_time) // delta_t, len(counter))
+            ind_counter_final = min((t_mission + state_time) // delta_t, len(Av[0]))
             for index in range(int(ind_counter_start), int(ind_counter_final)):
-                counter[index] += 1
+                Av[it][index] += 1
 
         t_mission += state_time
 
+        # State changement
         proba = []
         for j in range(len(A[0])):
             if j == i:
@@ -49,18 +50,25 @@ for _ in range(iterations):
         i_t_mission += 1
 
 print('A(t_mission) =',i_t_mission/iterations)
-A_t = [count / iterations for count in counter]
-print(A_t)
+
+Availaibility = np.mean(Av, axis=0)
+Accuracy = np.std(Av, axis=0) / np.sqrt(iterations)
+
+time_list = [t for t in range(0, int(t), int(delta_t))]
 
 plt.figure(figsize=(12, 6))
 
-time_list = [t for t in range(0, int(t), int(delta_t))]
-#plt.subplot(1, 2, 1)
-plt.plot(time_list,  A_t, label='Availibility')
-#plt.plot(thickness_plot,  transmission_probability_1, label='Double random', color='red')
+plt.subplot(1, 2, 1)
+plt.plot(time_list,  Availaibility, label='Availibility', color='blue')
 plt.legend()
 plt.xlabel('Time(s)')
 plt.ylabel('Availaibility')
+
+plt.subplot(1, 2, 2)
+plt.plot(time_list,  Accuracy, label='Accuracy', color='red')
+plt.legend()
+plt.xlabel('Time(s)')
+plt.ylabel('Accuracy')
 
 plt.show()
 
