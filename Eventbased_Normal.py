@@ -56,7 +56,7 @@ cases = [
     {"lambda_1": 0.2, "mu_1": 0.05, "lambda_s": 0.1, "mu_s": 0.02}  # Case 3: High failure rates (Ratio lambda/mu > 1)
 ]
 mission_time = 1000
-iterations = 10000
+iterations = 1000
 
 # Simulate for reliability cases
 results = []
@@ -100,29 +100,71 @@ plt.title("Availability and Reliability for Reliability Cases")
 plt.grid()
 plt.show()
 
-# Accuracy vs Iterations
+# Define iteration sizes for testing accuracy and error
 iteration_sizes = [100, 1000, 10000]
-accuracies = []
-for iterations in iteration_sizes:
-    availability, unavailability, reliability, unreliability = event_based_mc_simulation(
-        lambda_1=cases[0]["lambda_1"], # Use the first case for accuracy analysis
-        mu_1=cases[0]["mu_1"],
-        lambda_s=cases[0]["lambda_s"],
-        mu_s=cases[0]["mu_s"],
-        mission_time=mission_time,
-        iterations=iterations
-    )
-    accuracy_estimate = 1 / np.sqrt(iterations) # Compute accuracy
-    accuracies.append(accuracy_estimate)
 
-# Plot accuracy vs number of iterations
-plt.figure(figsize=(8, 6))
-plt.plot(iteration_sizes, accuracies, marker='o')
+# Simulate for different iteration sizes and calculate accuracy using the new formula
+accuracy_results = []
+
+for case in cases:
+    case_accuracies = []
+    for iterations in iteration_sizes:
+        # Run the simulation
+        availability, unavailability, reliability, unreliability = event_based_mc_simulation(
+            lambda_1=case["lambda_1"],
+            mu_1=case["mu_1"],
+            lambda_s=case["lambda_s"],
+            mu_s=case["mu_s"],
+            mission_time=mission_time,
+            iterations=iterations
+        )
+
+        # Calculate availability metrics
+        unavailability_mean = np.mean(unavailability, axis=0)
+        unavailability_accuracy = np.std(unavailability, axis=0) / np.sqrt(iterations)
+
+        # Calculate unreliability metrics
+        unreliability_mean = np.mean(unreliability, axis=0)
+        unreliability_accuracy = np.std(unreliability, axis=0) / np.sqrt(iterations)
+
+        # Append a tuple containing all metrics
+        case_accuracies.append((unavailability_mean, unavailability_accuracy, unreliability_mean, unreliability_accuracy))
+
+    accuracy_results.append(case_accuracies)
+
+# Calculate theoretical error 1/sqrt(N)
+theoretical_error = [1 / np.sqrt(N) for N in iteration_sizes]
+
+# Plot availability accuracy vs. iterations
+plt.figure(figsize=(10, 6))
+for i, case_accuracies in enumerate(accuracy_results):
+    availability_accuracies = [acc[1] for acc in case_accuracies]  # Index 1 for availability accuracy
+    plt.plot(iteration_sizes, availability_accuracies, marker='o', label=f"Case {i+1}: Availability Accuracy", linestyle='-')
+
+# Plot theoretical trend
+plt.plot(iteration_sizes, theoretical_error, 'k--', label="Theoretical 1/sqrt(N)")
 plt.xscale('log')
 plt.yscale('log')
 plt.xlabel("Number of Iterations (N)")
 plt.ylabel("Accuracy")
-plt.title("Accuracy vs Number of Iterations")
-plt.grid()
+plt.title("Availability Accuracy vs Number of Iterations")
 plt.legend()
+plt.grid()
+plt.show()
+
+# Plot unreliability accuracy vs. iterations
+plt.figure(figsize=(10, 6))
+for i, case_accuracies in enumerate(accuracy_results):
+    unreliability_accuracies = [acc[3] for acc in case_accuracies]  # Index 3 for unreliability accuracy
+    plt.plot(iteration_sizes, unreliability_accuracies, marker='s', label=f"Case {i+1}: Unreliability Accuracy", linestyle='--')
+
+# Plot theoretical trend
+plt.plot(iteration_sizes, theoretical_error, 'k--', label="Theoretical 1/sqrt(N)")
+plt.xscale('log')
+plt.yscale('log')
+plt.xlabel("Number of Iterations (N)")
+plt.ylabel("Accuracy")
+plt.title("Unreliability Accuracy vs Number of Iterations")
+plt.legend()
+plt.grid()
 plt.show()

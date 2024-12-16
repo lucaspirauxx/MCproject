@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 # Event-based Monte Carlo simulation with rate forcing
 def event_based_rate_forcing_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, mission_time, iterations):
     # Biased failure rates
-    biased_lambda_1 = lambda_1 * 10
-    biased_lambda_s = lambda_s * 10
+    biased_lambda_1 = lambda_1 * 2
+    biased_lambda_s = lambda_s * 2
     # New Transition rate matrix
     A = np.array([
         [-biased_lambda_1, biased_lambda_1, 0, 0, 0, 0],
@@ -23,8 +23,9 @@ def event_based_rate_forcing_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, missi
         current_time = 0
         state = 0
         has_failed = False
-        weight = 1
+        weight = 1.0
         while current_time < mission_time:
+            # Sample transition times
             transition_times = [-np.log(np.random.rand()) / abs(A[state][j]) if A[state, j] > 0 else np.inf for j in range(len(A))]
             min_time = min(transition_times)
             next_state = np.argmin(transition_times)

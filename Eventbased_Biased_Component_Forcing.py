@@ -13,15 +13,15 @@ def event_based_forced_failures_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, mi
         [0, 0, 2*mu_s, 0, mu_1, -2*mu_s-mu_1]
     ])
     failure_state = 5
-    availability_time = np.zeros(mission_time)
-    reliability_time = np.zeros(mission_time)
+    unavailability_time = np.zeros(mission_time)
+    unreliability_time = np.zeros(mission_time)
     failure_counter = 0
     weights = []  # Likelihood ratio weights for biasing
     for _ in range(iterations):
         current_time = 0
         state = 0
         weight = 1.0 # Likelihood ratio weight
-        has_failed = False
+        has_failed = True
         while current_time < mission_time:
             # Sample transition times
             transition_times = [-np.log(np.random.rand()) / abs(A[state][j]) if A[state, j] > 0 else np.inf for j in range(len(A))]
@@ -31,21 +31,21 @@ def event_based_forced_failures_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, mi
             # Apply forced failure bias before limit time
             if current_time < limit_time and state != failure_state:
                 state = failure_state
-                weight *= 0.5 # Adjust likelihood ratio for forced transition
+                weight *= 0.2 # Adjust likelihood ratio for forced transition
             if state != failure_state:
-                availability_time[int(current_time):time_end] += 1
+                unavailability_time[int(current_time):time_end] += 1
                 if not has_failed:
-                    reliability_time[int(current_time):time_end] += 1
+                    unreliability_time[int(current_time):time_end] += 1
             current_time += min_time
             state = next_state
             if state == failure_state:
                 failure_counter += 1
-                has_failed = True
+                has_failed = False
         weights.append(weight) # Add weights
-    availability = availability_time  / iterations
-    reliability = reliability_time / iterations
-    unavailability = 1 - availability
-    unreliability = 1 - reliability
+    unavailability = unavailability_time  / iterations
+    unreliability = unreliability_time / iterations
+    availability = 1 - unavailability
+    reliability = 1 - unreliability
     return availability, unavailability, reliability, unreliability
 
 # Reliability cases
@@ -54,8 +54,8 @@ cases = [
     {"lambda_1": 0.05, "mu_1": 0.2, "lambda_s": 0.02, "mu_s": 0.1}, # Case 2: High repair rates
     {"lambda_1": 0.2, "mu_1": 0.05, "lambda_s": 0.1, "mu_s": 0.02}  # Case 3: High failure rates
 ]
-mission_time = 1000
-iterations = 10000
+mission_time = 100
+iterations = 1000
 limit_time = 200 # Limit time for forced failures
 
 # Run simulations for each case
@@ -76,8 +76,8 @@ for case in cases:
 time_points = np.arange(0, mission_time)
 plt.figure(figsize=(8, 6))
 for i, (availability, unavailability, reliability, unreliability) in enumerate(results):
-    plt.plot(time_points, unavailability, label=f"Case {i+1}: Unvailability")
     plt.plot(time_points, unreliability, linestyle='--', label=f"Case {i+1}: Unreliability")
+    plt.plot(time_points, unavailability, label=f"Case {i+1}: Unavailability")
 plt.xlabel("Time (s)")
 plt.ylabel("Probability")
 plt.legend()
@@ -88,8 +88,8 @@ plt.show()
 # Plot availability and reliability for each case
 plt.figure(figsize=(8, 6))
 for i, (availability, unavailability, reliability, unreliability) in enumerate(results):
+    plt.plot(time_points, reliability, linestyle='--',label=f"Case {i+1}: Reliability")
     plt.plot(time_points, availability, label=f"Case {i+1}: Availability")
-    plt.plot(time_points, reliability, linestyle='--', label=f"Case {i+1}: Reliability")
 plt.xlabel("Time (s)")
 plt.ylabel("Probability")
 plt.legend()
