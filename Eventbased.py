@@ -1,131 +1,111 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Define function to simulate event-based Monte Carlo
-def event_based_mc_simulation(lambda_1, mu_1, lambda_s, mu_s, mission_time, iterations):
-    # Transition rate matrix A
-    A = np.array([
-        [-lambda_1, lambda_1, 0, 0, 0, 0],
-        [mu_1, -mu_1-lambda_s, lambda_s, 0, 0, 0],
-        [0, mu_s, -mu_s-mu_1-lambda_s, mu_1, 0, lambda_s],
-        [mu_s, 0, lambda_1, -mu_s-lambda_1, 0, 0],
-        [0, 0, 0, 2*mu_s, -2*mu_s-lambda_1, lambda_1],
-        [0, 0, 2*mu_s, 0, mu_1, -2*mu_s-mu_1]
-    ])
-    failure_state = 5  # Index of the failure state
-    # Initialize counters
-    availability_time = np.zeros(mission_time)
-    reliability_time = np.zeros(mission_time)
-    failure_counter = 0
-    # Event-based Monte Carlo simulation
-    for _ in range(iterations):
-        current_time = 0
-        state = 0  # Start in the operational state
-        has_failed = False
-        while current_time < mission_time:
-            # Sample transition times for all possible transitions
-            transition_times = [
-                -np.log(np.random.rand()) / abs(A[state][j]) if A[state, j] > 0 else np.inf
-                for j in range(len(A))
-            ]
-            # Determine the next transition
-            min_time = min(transition_times)
-            next_state = np.argmin(transition_times)
-            time_end = min(int(current_time + min_time), mission_time)
-            # Update availability (always operational if not in failure state)
-            if state != failure_state:
-                availability_time[int(current_time):time_end] += 1
-                if not has_failed:
-                    # Update reliability only if no failure has occurred
-                    reliability_time[int(current_time):time_end] += 1
-            # Advance time and state
-            current_time += min_time
-            state = next_state
-            # Mark failure if we enter the failure state
-            if state == failure_state:
-                failure_counter += 1
-                has_failed = True
-    # Normalize counters to calculate probabilities
-    availability = availability_time / iterations
-    reliability = reliability_time / iterations
-    unavailability = 1 - availability
-    unreliability = 1 - reliability
-    return availability, unavailability, reliability, unreliability
 
-# Reliability cases
-cases = [
-    {"lambda_1": 0.1, "mu_1": 0.1, "lambda_s": 0.05, "mu_s": 0.05}, # Case 1: Balanced rates (Ratio lambda/mu = 1)
-    {"lambda_1": 0.05, "mu_1": 0.2, "lambda_s": 0.02, "mu_s": 0.1}, # Case 2: High repair rates (Ratio lambda/mu < 1)
-    {"lambda_1": 0.2, "mu_1": 0.05, "lambda_s": 0.1, "mu_s": 0.02}  # Case 3: High failure rates (Ratio lambda/mu > 1)
-]
-mission_time = 1000
+lambda_1 = [0.1,0.1]
+mu_1 = [0.1,0.5]
+lambda_s = [0.1,0.1]
+mu_s = [0.1,0.5]
+
+t = 2000  # time of the mission
+delta_t = 1
 iterations = 10000
 
-# Simulate for reliability cases
-results = []
-for case in cases:
-    availability, unavailability, reliability, unreliability = event_based_mc_simulation(
-        lambda_1=case["lambda_1"],
-        mu_1=case["mu_1"],
-        lambda_s=case["lambda_s"],
-        mu_s=case["mu_s"],
-        mission_time=mission_time,
-        iterations=iterations
-    )
-    results.append((availability, unavailability, reliability, unreliability))
+a = []
+b = []
+c = []
+d = []
 
-# Plot unavailability and unreliability
-time_points = np.arange(0, mission_time)
-plt.figure(figsize=(14, 8))
-for i, (availability, unavailability, reliability, unreliability) in enumerate(results):
-    # Plot unavailability
-    plt.plot(time_points, unavailability, label=f"Case {i+1}: Unavailability", linestyle='-')
-    # Plot unreliability
-    plt.plot(time_points, unreliability, label=f"Case {i+1}: Unreliability", linestyle='--')
-plt.xlabel("Time (s)")
-plt.ylabel("Probability")
+
+failure_state = 5  # Index of the failure state
+# Initialize counters
+
+for set in range(len(lambda_s)):
+    A = [(-lambda_1[set], lambda_1[set], 0, 0, 0, 0), (mu_1[set], -mu_1[set] - lambda_s[set], lambda_s[set], 0, 0, 0),
+         (0, mu_s[set], -mu_s[set] - mu_1[set] - lambda_s[set], mu_1[set], 0, lambda_s[set]), (mu_s[set], 0, lambda_1[set], -mu_s[set] - lambda_1[set], 0, 0),
+         (0, 0, 0, 2 * mu_s[set], -2 * mu_s[set] - lambda_1[set], lambda_1[set]), (0, 0, 2 * mu_s[set], 0, mu_1[set], -2 * mu_s[set] - mu_1[set])]
+    Av = [[0] * int((t / delta_t)) for _ in range(iterations)]
+    Re = [[0] * int((t / delta_t)) for _ in range(iterations)]
+
+    # Event-based Monte Carlo simulation
+    for it in range(iterations):
+        print(it)
+        t_mission = 0
+        i = 0  # Start in the operational state
+        first_failure = False
+
+        while t_mission < t:
+            # Compute the state time of differents possible elements
+            transition_times = [
+                -np.log(np.random.rand()) / abs(A[i][j]) if A[i][j] > 0 else np.inf
+                for j in range(len(A))
+            ]
+            # And take the minimal time
+            state_time = min(transition_times)
+
+            if i == failure_state:
+                # We save the first failure moment, and don't increment the reliability
+                first_failure = True
+
+            else:
+                # Compute the number of elements of the vector of counter we will increment
+                ind_counter_start = t_mission // delta_t  # here, every 1 second
+                ind_counter_final = min((t_mission + state_time) // delta_t, len(Av[0]))
+                for index in range(int(ind_counter_start), int(ind_counter_final)):
+                    Av[it][index] += 1  # Then we increment the availibity for every instant
+                    if not first_failure:  # And for reliability we don't if system has already failed
+                        Re[it][index] += 1
+
+            t_mission += state_time
+            i = np.argmin(transition_times)
+
+    Availability = np.mean(Av, axis=0)
+    Unavailability = [1 - avail for avail in Availability]
+    a.append(Unavailability)
+    Accuracy_av = np.std(Av, axis=0) / np.sqrt(iterations)
+    b.append(Accuracy_av)
+
+    Reliability = np.mean(Re, axis=0)
+    Unreliability = [1 - relia for relia in Reliability]
+    c.append(Unreliability)
+    Accuracy_re = np.std(Re, axis=0) / np.sqrt(iterations)
+    d.append(Accuracy_re)
+
+
+
+time_list = [t for t in range(0, int(t), int(delta_t))]
+
+plt.figure("Availability and reliability")
+
+plt.subplot(1, 2, 1)
+plt.plot(time_list,  a[0], label='Unavailability A')
+plt.plot(time_list,  a[1], label='Unavailability B')
 plt.legend()
-plt.title("Unavailability and Unreliability for Reliability Cases")
-plt.grid()
+plt.xlabel('Time(s)')
+
+plt.subplot(1, 2, 2)
+plt.plot(time_list,  c[0], label='Unreliability A')
+plt.plot(time_list,  c[1], label='Unreliability B')
+plt.legend()
+plt.xlabel('Time(s)')
+
+plt.figure("Accuracy")
+
+plt.subplot(1, 2, 1)
+plt.plot(time_list,  b[0], label='Accuracy availability A')
+plt.plot(time_list,  b[1], label='Accuracy availability B')
+plt.legend()
+plt.xlabel('Time(s)')
+
+plt.subplot(1, 2, 2)
+plt.plot(time_list,  d[0], label='Accuracy reliability A')
+plt.plot(time_list,  d[1], label='Accuracy reliability B')
+plt.legend()
+plt.xlabel('Time(s)')
+
 plt.show()
 
-# Plot availability and reliability
-plt.figure(figsize=(14, 8))
-for i, (availability, unavailability, reliability, unreliability) in enumerate(results):
-    # Plot availability
-    plt.plot(time_points, availability, label=f"Case {i+1}: Availability")
-    # Plot reliability
-    plt.plot(time_points, reliability, label=f"Case {i+1}: Reliability")
-plt.xlabel("Time (s)")
-plt.ylabel("Probability")
-plt.legend()
-plt.title("Availability for Reliability Cases")
-plt.grid()
-plt.show()
 
-# Accuracy vs Iterations
-iteration_sizes = [100, 1000, 10000, 100000]
-accuracies = []
-for iterations in iteration_sizes:
-    availability, unavailability, reliability, unreliability = event_based_mc_simulation(
-        lambda_1=cases[0]["lambda_1"],  # Use the first case for accuracy analysis
-        mu_1=cases[0]["mu_1"],
-        lambda_s=cases[0]["lambda_s"],
-        mu_s=cases[0]["mu_s"],
-        mission_time=mission_time,
-        iterations=iterations
-    )
-    accuracy_estimate = 1 / np.sqrt(iterations)  # Compute accuracy
-    accuracies.append(accuracy_estimate)
 
-# Plot accuracy vs number of iterations
-plt.figure(figsize=(12, 6))
-plt.plot(iteration_sizes, accuracies, marker='o')
-plt.xscale('log')
-plt.yscale('log')
-plt.xlabel("Number of Iterations (N)")
-plt.ylabel("Accuracy")
-plt.title("Accuracy vs Number of Iterations")
-plt.grid()
-plt.legend()
-plt.show()
+
+
