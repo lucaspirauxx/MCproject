@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-lambda_1 = [0.1,0.1]
-mu_1 = [0.1,0.5]
-lambda_s = [0.1,0.1]
-mu_s = [0.1,0.5]
+lambda_1 = [0.1,0.1,0.1]
+mu_1 = [0.1,0.5,0.3]
+lambda_s = [0.1,0.1,0.1]
+mu_s = [0.1,0.5,0.3]
 
 t = 2000  # time of the mission
 delta_t = 1
@@ -29,7 +29,6 @@ for set in range(len(lambda_s)):
 
     # Event-based Monte Carlo simulation
     for it in range(iterations):
-        print(it)
         t_mission = 0
         i = 0  # Start in the operational state
         first_failure = False
@@ -80,32 +79,42 @@ plt.figure("Availability and reliability")
 plt.subplot(1, 2, 1)
 plt.plot(time_list,  a[0], label='Unavailability A')
 plt.plot(time_list,  a[1], label='Unavailability B')
+plt.plot(time_list,  a[2], label='Unavailability C')
 plt.legend()
 plt.xlabel('Time(s)')
+plt.title('Unavailability')
+plt.grid(True)
 
 plt.subplot(1, 2, 2)
 plt.plot(time_list,  c[0], label='Unreliability A')
 plt.plot(time_list,  c[1], label='Unreliability B')
+plt.plot(time_list,  c[2], label='Unreliability C')
 plt.legend()
 plt.xlabel('Time(s)')
+plt.title('Unreliability')
+plt.grid(True)
 
-plt.figure("Accuracy")
+
+plt.figure("Std")
 
 plt.subplot(1, 2, 1)
-plt.plot(time_list,  b[0], label='Accuracy availability A')
-plt.plot(time_list,  b[1], label='Accuracy availability B')
+plt.plot(time_list,  b[0], label='Std unavailability A')
+plt.plot(time_list,  b[1], label='Std unavailability B')
+plt.plot(time_list,  b[2], label='Std unavailability C')
 plt.legend()
 plt.xlabel('Time(s)')
+plt.title('Standard deviation unavailability')
+plt.grid(True)
 
 plt.subplot(1, 2, 2)
-plt.plot(time_list,  d[0], label='Accuracy reliability A')
-plt.plot(time_list,  d[1], label='Accuracy reliability B')
+plt.plot(time_list,  d[0], label='Std unreliability A')
+plt.plot(time_list,  d[1], label='Std unreliability B')
+plt.plot(time_list,  d[2], label='Std unreliability C')
 plt.legend()
 plt.xlabel('Time(s)')
+plt.title('Standard deviation unreliability')
+plt.grid(True)
 
 plt.show()
-
-
-
 
 
